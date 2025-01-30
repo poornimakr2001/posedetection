@@ -102,14 +102,44 @@ async def video_feed():
 # Frame processing endpoint
 @app.post("/process_frame/")
 async def process_frame(file: UploadFile = File(...)):
-    # Process the uploaded file, detect faces, and return an image
+    # Read the uploaded image
     image_data = await file.read()
     image = Image.open(io.BytesIO(image_data))
+    image = np.array(image.convert("RGB"))  # Convert PIL Image to numpy array
 
-    # For demonstration, save the image as processed (you can add your processing logic here)
-    output_path = "processed_frame.jpg"
-    image.save(output_path)  # Save the image to disk (you can modify this for real processing)
+    # Print known faces for debugging
+    print(f"Known faces: {known_face_names}")
+
+    # Detect faces using YOLO
+    results = model(image)
+    face_locations = []
+
+    for r in results:
+        for box in r.boxes:
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
+            face_locations.append((y1, x2, y2, x1))  # Format for face_recognition
     
-    # Return the processed image
-    return FileResponse(output_path, media_type="image/jpeg")
+    # Print number of faces detected
+    print(f"Number of faces detected in the frame: {len(face_locations)}")
+
+    # Recognize faces
+    recognized_name = "Unknown"
+    if face_locations:
+        face_encodings = face_recognition.face_encodings(image, face_locations)
+        for face_encoding in face_encodings:
+            matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
+            if True in matches:
+                best_match_index = np.argmin(face_recognition.face_distance(known_face_encodings, face_encoding))
+                recognized_name = known_face_names[best_match_index]
+
+    # Draw face box and label on image
+    for (top, right, bottom, left) in face_locations:
+        cv2.rectangle(image, (left, top), (right, bottom), (0, 255, 0), 2)
+        cv2.putText(image, recognized_name, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+
+    # Convert the image back to JPEG format
+    _, buffer = cv2.imencode(".jpg", cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+    
+    return StreamingResponse(io.BytesIO(buffer.tobytes()), media_type="image/jpeg")
+
 
