@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+    
+</head>
+<body>
+    <h1>Face Recognition using YOLO and FastAPI</h1>
+    
+    <div id="video-container">
+        <video id="webcam" autoplay></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+    
+    <br>
+    <button id="capture">Capture & Recognize</button>
+    
+    <p id="loading">Processing...</p>
+    
+    <img id="output" src="" alt="Processed Frame">
+
+    <script>
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('canvas');
+        const captureButton = document.getElementById('capture');
+        const outputImage = document.getElementById('output');
+        const loadingText = document.getElementById('loading');
+
+        // Access webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Error accessing webcam:", err);
+            });
+
+        // Capture frame and send to server
+        captureButton.addEventListener('click', async () => {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert canvas image to blob
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('file', blob, 'frame.jpg');
+
+                // Show loading text
+                loadingText.style.display = 'block';
+                outputImage.style.display = 'none';
+
+                try {
+                    const response = await fetch('/process_frame/', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                          // Add trailing slash
+    
+    
+
+
+
+                    if (response.ok) {
+                        const imageBlob = await response.blob();
+                        outputImage.src = URL.createObjectURL(imageBlob);
+                        outputImage.style.display = 'block';
+                    } else {
+                        console.error("Error processing frame:", response.statusText);
+                    }
+                } catch (error) {
+                    console.error("Request failed:", error);
+                } finally {
+                    loadingText.style.display = 'none';
+                }
+            }, 'image/jpeg');
+        });
+    </script>
+</body>
+</html>
