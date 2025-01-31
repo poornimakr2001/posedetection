@@ -3,24 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Recognition</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+    <title>Face Recognition App</title>
     
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <style>
+        body {
+            background: linear-gradient(to right, #141E30, #243B55);
+            color: white;
+            text-align: center;
+        }
+        .landing {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: auto;
+        }
+        #webcam {
+            width: 100%;
+            border-radius: 10px;
+            border: 3px solid #17a2b8;
+        }
+        #output {
+            display: none;
+            margin-top: 20px;
+            border-radius: 10px;
+            border: 3px solid #28a745;
+            width: 100%;
+            max-width: 500px;
+        }
+        #loading {
+            display: none;
+            font-weight: bold;
+            color: yellow;
+        }
+    </style>
 </head>
 <body>
-    <h1>Face Recognition using YOLO and FastAPI</h1>
-    
-    <div id="video-container">
-        <video id="webcam" autoplay></video>
-        <canvas id="canvas" style="display:none;"></canvas>
+
+    <!-- Landing Page -->
+    <div class="container landing">
+        <img src="https://cdn-icons-png.flaticon.com/512/1048/1048958.png" width="120" alt="Face Recognition">
+        <h1 class="mt-3">AI-Powered Face Recognition</h1>
+        <p class="lead">Secure | Fast | Reliable</p>
+        <button class="btn btn-primary btn-lg mt-3" onclick="startApp()">Get Started</button>
     </div>
-    
-    <br>
-    <button id="capture">Capture & Recognize</button>
-    
-    <p id="loading">Processing...</p>
-    
-    <img id="output" src="" alt="Processed Frame">
+
+    <!-- Main Face Recognition Section -->
+    <div class="container mt-4" id="face-recognition-section" style="display:none;">
+        <h2>Face Recognition System</h2>
+        <p class="text-light">Capture your face and process it using AI.</p>
+
+        <!-- Video Container -->
+        <div class="video-container">
+            <video id="webcam" autoplay></video>
+            <canvas id="canvas" style="display:none;"></canvas>
+        </div>
+
+        <!-- Buttons -->
+        <button id="capture" class="btn btn-success mt-3">Capture & Recognize</button>
+        <p id="loading">Processing...</p>
+
+        <!-- Processed Image Output -->
+        <img id="output" src="" alt="Processed Face">
+
+        <button class="btn btn-danger mt-3" onclick="location.reload()">Restart</button>
+    </div>
 
     <script>
         const video = document.getElementById('webcam');
@@ -28,24 +86,30 @@
         const captureButton = document.getElementById('capture');
         const outputImage = document.getElementById('output');
         const loadingText = document.getElementById('loading');
+        const landingPage = document.querySelector('.landing');
+        const faceRecognitionSection = document.getElementById('face-recognition-section');
 
-        // Access webcam
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
-            })
-            .catch(err => {
-                console.error("Error accessing webcam:", err);
-            });
+        function startApp() {
+            landingPage.style.display = 'none';
+            faceRecognitionSection.style.display = 'block';
 
-        // Capture frame and send to server
+            // Start Webcam
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                })
+                .catch(err => {
+                    console.error("Error accessing webcam:", err);
+                });
+        }
+
         captureButton.addEventListener('click', async () => {
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Convert canvas image to blob
+            // Convert canvas to blob
             canvas.toBlob(async (blob) => {
                 const formData = new FormData();
                 formData.append('file', blob, 'frame.jpg');
@@ -59,12 +123,6 @@
                         method: 'POST',
                         body: formData
                     });
-
-                          // Add trailing slash
-    
-    
-
-
 
                     if (response.ok) {
                         const imageBlob = await response.blob();
@@ -81,5 +139,6 @@
             }, 'image/jpeg');
         });
     </script>
+
 </body>
 </html>
