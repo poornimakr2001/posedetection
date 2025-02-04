@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance System</title>
+    <script>
+        function startCamera() {
+            const video = document.getElementById("video");
+            navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+                video.srcObject = stream;
+            });
+        }
+
+        async function captureFrame() {
+            const video = document.getElementById("video");
+            const canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append("file", blob, "frame.jpg");
+
+                const response = await fetch("/process_frame/", { method: "POST", body: formData });
+                const data = await response.json();
+                const resultDiv = document.getElementById("recognition-result");
+                if (data.name !== "Unknown") {
+                    resultDiv.textContent = `Attendance recorded for ${data.name}`;
+                } else {
+                    resultDiv.textContent = "Face not recognized";
+                }
+            }, "image/jpeg");
+        }
+    </script>
+</head>
+<body>
+    <h1>Attendance Management</h1>
+    <button onclick="startCamera()">Start Camera</button>
+    <video id="video" autoplay></video>
+    <button onclick="captureFrame()">Capture & Recognize</button>
+    <div id="recognition-result"></div>
+</body>
+</html>
