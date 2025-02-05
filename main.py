@@ -104,7 +104,8 @@ async def process_frame(file: UploadFile = File(...)):
                 name = known_face_names[best_match_index]
                 mark_attendance(name)  # Store attendance
 
-    return {"name": name, "status": "Attendance recorded" if name != "Unknown" else "Face not recognized"}
+    return JSONResponse({"name": name, "status": "Attendance recorded" if name != "Unknown" else "Face not recognized"})
+
 # Function to store attendance in the database
 def mark_attendance(name):
     conn = sqlite3.connect("database/attendance.db")

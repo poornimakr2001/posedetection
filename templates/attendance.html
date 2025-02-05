@@ -3,43 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance System</title>
-    <script>
-        function startCamera() {
-            const video = document.getElementById("video");
-            navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
-                video.srcObject = stream;
-            });
+    <title>Attendance Management</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            min-height: 100vh;
         }
-
-        async function captureFrame() {
-            const video = document.getElementById("video");
-            const canvas = document.createElement("canvas");
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            canvas.toBlob(async (blob) => {
-                const formData = new FormData();
-                formData.append("file", blob, "frame.jpg");
-
-                const response = await fetch("/process_frame/", { method: "POST", body: formData });
-                const data = await response.json();
-                const resultDiv = document.getElementById("recognition-result");
-                if (data.name !== "Unknown") {
-                    resultDiv.textContent = `Attendance recorded for ${data.name}`;
-                } else {
-                    resultDiv.textContent = "Face not recognized";
-                }
-            }, "image/jpeg");
+        h1 {
+            font-weight: 600;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
         }
-    </script>
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            margin: 0 auto;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        #video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .btn-custom {
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            border: none;
+            color: #fff;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        .btn-custom:active {
+            transform: translateY(0);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .attendance-table {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        .table {
+            color: #fff;
+        }
+        .table th, .table td {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+    </style>
 </head>
 <body>
-    <h1>Attendance Management</h1>
-    <button onclick="startCamera()">Start Camera</button>
-    <video id="video" autoplay></video>
-    <button onclick="captureFrame()">Capture & Recognize</button>
-    <div id="recognition-result"></div>
+    <div class="container py-5">
+        <h1 class="text-center mb-4">🎯 Attendance Management System</h1>
+        <div class="video-container mb-4">
+            <video id="video" autoplay></video>
+        </div>
+        <div class="text-center mb-4">
+            <button id="toggleCamera" class="btn btn-custom me-2">Toggle Camera</button>
+            <button id="capture" class="btn btn-custom">Capture</button>
+        </div>
+        <div id="loading" class="text-center mb-4" style="display: none;">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <p id="result" class="text-center mb-4 fs-5"></p>
+        <div id="attendanceTable" class="attendance-table">
+            <h2 class="text-center mb-4">📅 Attendance Records</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Rows will be added dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        const captureButton = document.getElementById('capture');
+        const toggleCameraButton = document.getElementById('toggleCamera');
+        const result = document.getElementById('result');
+        const loading = document.getElementById('loading');
+        const attendanceTableBody = document.querySelector('#attendanceTable tbody');
+        let stream;
+
+        // Toggle camera on/off
+        function toggleCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                stream = null;
+                toggleCameraButton.textContent = 'Start Camera';
+            } else {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(newStream => {
+                        stream = newStream;
+                        video.srcObject = stream;
+                        toggleCameraButton.textContent = 'Stop Camera';
+                    })
+                    .catch(error => {
+                        console.error("Error accessing the camera:", error);
+                        alert("Failed to access the camera.");
+                    });
+            }
+        }
+
+        toggleCameraButton.addEventListener('click', toggleCamera);
+
+        // Capture image and process
+        captureButton.addEventListener('click', () => {
+            loading.style.display = 'block';
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(blob => {
+                let formData = new FormData();
+                formData.append("file", blob, "capture.jpg");
+
+                fetch("/process_frame/", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    loading.style.display = 'none';
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        result.innerText = `✅ Recognized: ${data.name} (Confidence: ${data.confidence})`;
+                        const newRow = `<tr><td>${data.name}</td><td>${new Date().toLocaleTimeString()}</td></tr>`;
+                        attendanceTableBody.insertAdjacentHTML('afterbegin', newRow);
+                    }
+                })
+                .catch(error => {
+                    loading.style.display = 'none';
+                    console.error("Error processing image:", error);
+                    alert("Error processing image. Please try again.");
+                });
+            }, "image/jpeg");
+        });
+
+        // Stop camera when leaving the page
+        window.addEventListener('beforeunload', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
 </body>
 </html>
