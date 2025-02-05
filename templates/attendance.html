@@ -140,11 +140,6 @@
                 .then(data => {
                     loading.style.display = 'none';
                     result.innerText = `✅ ${data.name}: ${data.status}`;
-
-                    if (data.status === "Attendance recorded") {
-                        const newRow = `<tr><td>${data.name}</td><td>${new Date().toLocaleTimeString()}</td></tr>`;
-                        attendanceBody.insertAdjacentHTML('afterbegin', newRow);
-                    }
                 })
                 .catch(error => {
                     loading.style.display = 'none';
@@ -154,35 +149,46 @@
             }, "image/jpeg");
         });
 
-        // Fetch attendance summary
-        function fetchSummary() {
+        // ✅ Auto-refresh attendance every 5 seconds
+        function fetchAttendance() {
             fetch("/report")
             .then(response => response.json())
             .then(data => {
+                // Update today's attendance table
+                attendanceBody.innerHTML = data.present.map(name => 
+                    `<tr><td>${name}</td><td>${new Date().toLocaleTimeString()}</td></tr>`
+                ).join("");
+
+                // Update summary table
                 summaryBody.innerHTML = `
                     <tr>
-                        <td>${data.present.join("<br>")}</td>
-                        <td>${data.absent.join("<br>")}</td>
+                        <td>${data.present.join("<br>") || "None"}</td>
+                        <td>${data.absent.join("<br>") || "None"}</td>
                     </tr>
                 `;
             });
         }
 
-        // Fetch previous day's report
+        // ✅ Auto-refresh previous day report every 5 seconds
         function fetchPreviousReport() {
             fetch("/report/previous")
             .then(response => response.json())
             .then(data => {
                 previousBody.innerHTML = `
                     <tr>
-                        <td>${data.present.join("<br>")}</td>
-                        <td>${data.absent.join("<br>")}</td>
+                        <td>${data.present.join("<br>") || "None"}</td>
+                        <td>${data.absent.join("<br>") || "None"}</td>
                     </tr>
                 `;
             });
         }
 
-        fetchSummary();
+        // ✅ Fetch data every 5 seconds
+        setInterval(fetchAttendance, 5000);
+        setInterval(fetchPreviousReport, 5000);
+
+        // Initial fetch on page load
+        fetchAttendance();
         fetchPreviousReport();
 
         window.addEventListener('beforeunload', () => {
