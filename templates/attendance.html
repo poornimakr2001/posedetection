@@ -4,53 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendance Management</title>
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <!-- Custom CSS -->
     <style>
         body {
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: #fff;
             min-height: 100vh;
-        }
-        h1 {
-            font-weight: 600;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-        }
-        .video-container {
-            position: relative;
-            width: 100%;
-            max-width: 640px;
-            margin: 0 auto;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-        #video {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-        .btn-custom {
-            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
-            border: none;
-            color: #fff;
-            font-weight: 600;
-            padding: 10px 20px;
-            border-radius: 25px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .btn-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-        }
-        .btn-custom:active {
-            transform: translateY(0);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
         .attendance-table {
             background: rgba(255, 255, 255, 0.1);
@@ -62,33 +23,31 @@
         .table {
             color: #fff;
         }
-        .table th, .table td {
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-        .spinner-border {
-            width: 3rem;
-            height: 3rem;
-        }
     </style>
 </head>
 <body>
     <div class="container py-5">
         <h1 class="text-center mb-4">🎯 Attendance Management System</h1>
+        
         <div class="video-container mb-4">
             <video id="video" autoplay></video>
         </div>
+        
         <div class="text-center mb-4">
             <button id="toggleCamera" class="btn btn-custom me-2">Toggle Camera</button>
             <button id="capture" class="btn btn-custom">Capture</button>
         </div>
+
         <div id="loading" class="text-center mb-4" style="display: none;">
             <div class="spinner-border" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
         </div>
+
         <p id="result" class="text-center mb-4 fs-5"></p>
+
         <div id="attendanceTable" class="attendance-table">
-            <h2 class="text-center mb-4">📅 Attendance Records</h2>
+            <h2 class="text-center mb-4">📅 Today's Attendance</h2>
             <table class="table">
                 <thead>
                     <tr>
@@ -96,9 +55,35 @@
                         <th>Time</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <!-- Rows will be added dynamically -->
-                </tbody>
+                <tbody id="attendanceBody"></tbody>
+            </table>
+        </div>
+
+        <!-- New Section for Present & Absent Employees -->
+        <div id="summaryTable" class="attendance-table mt-4">
+            <h2 class="text-center mb-4">📌 Attendance Summary</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Present</th>
+                        <th>Absent</th>
+                    </tr>
+                </thead>
+                <tbody id="summaryBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Previous Day Report -->
+        <div id="previousReport" class="attendance-table mt-4">
+            <h2 class="text-center mb-4">📅 Previous Day Attendance</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Present</th>
+                        <th>Absent</th>
+                    </tr>
+                </thead>
+                <tbody id="previousBody"></tbody>
             </table>
         </div>
     </div>
@@ -111,10 +96,11 @@
         const toggleCameraButton = document.getElementById('toggleCamera');
         const result = document.getElementById('result');
         const loading = document.getElementById('loading');
-        const attendanceTableBody = document.querySelector('#attendanceTable tbody');
+        const attendanceBody = document.getElementById("attendanceBody");
+        const summaryBody = document.getElementById("summaryBody");
+        const previousBody = document.getElementById("previousBody");
         let stream;
 
-        // Toggle camera on/off
         function toggleCamera() {
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
@@ -137,7 +123,6 @@
 
         toggleCameraButton.addEventListener('click', toggleCamera);
 
-        // Capture image and process
         captureButton.addEventListener('click', () => {
             loading.style.display = 'block';
             canvas.width = video.videoWidth;
@@ -154,12 +139,11 @@
                 .then(response => response.json())
                 .then(data => {
                     loading.style.display = 'none';
-                    if (data.error) {
-                        alert(data.error);
-                    } else {
-                        result.innerText = `✅ Recognized: ${data.name} (Confidence: ${data.confidence})`;
+                    result.innerText = `✅ ${data.name}: ${data.status}`;
+
+                    if (data.status === "Attendance recorded") {
                         const newRow = `<tr><td>${data.name}</td><td>${new Date().toLocaleTimeString()}</td></tr>`;
-                        attendanceTableBody.insertAdjacentHTML('afterbegin', newRow);
+                        attendanceBody.insertAdjacentHTML('afterbegin', newRow);
                     }
                 })
                 .catch(error => {
@@ -170,7 +154,37 @@
             }, "image/jpeg");
         });
 
-        // Stop camera when leaving the page
+        // Fetch attendance summary
+        function fetchSummary() {
+            fetch("/report")
+            .then(response => response.json())
+            .then(data => {
+                summaryBody.innerHTML = `
+                    <tr>
+                        <td>${data.present.join("<br>")}</td>
+                        <td>${data.absent.join("<br>")}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Fetch previous day's report
+        function fetchPreviousReport() {
+            fetch("/report/previous")
+            .then(response => response.json())
+            .then(data => {
+                previousBody.innerHTML = `
+                    <tr>
+                        <td>${data.present.join("<br>")}</td>
+                        <td>${data.absent.join("<br>")}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        fetchSummary();
+        fetchPreviousReport();
+
         window.addEventListener('beforeunload', () => {
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
