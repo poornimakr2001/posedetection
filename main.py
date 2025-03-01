@@ -136,7 +136,7 @@ async def process_frame(file: UploadFile = File(...)):
             face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
             best_match_index = np.argmin(face_distances)
 
-            if face_distances[best_match_index] < 0.5:  # ✅ Strict threshold to reject unknowns
+            if face_distances[best_match_index] < 0.3:  # ✅ Strict threshold to reject unknowns
                 name = known_face_names[best_match_index]
                 if not has_recent_attendance(name):
                     mark_attendance(name)
