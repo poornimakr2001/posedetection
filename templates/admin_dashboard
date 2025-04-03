@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, var(--secondary-color), var(--dark-color));
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding-top: 20px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 5px;
+            border-radius: 5px;
+            padding: 10px 20px;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+        }
+        
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+        
+        .badge-success {
+            background-color: #2ecc71;
+        }
+        
+        .badge-warning {
+            background-color: #f39c12;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+        
+        .logout-btn {
+            color: rgba(255, 255, 255, 0.7);
+            background: none;
+            border: none;
+            padding: 10px 20px;
+            width: 100%;
+            text-align: left;
+            transition: all 0.3s;
+        }
+        
+        .logout-btn:hover {
+            color: var(--accent-color);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar col-md-3 col-lg-2">
+        <div class="sidebar-header">
+            <h4><i class="fas fa-user-shield"></i> Admin Panel</h4>
+        </div>
+        
+        <div class="sidebar-menu">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#dashboard">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#attendance">
+                        <i class="fas fa-user-clock"></i> Attendance
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#posture">
+                        <i class="fas fa-desktop"></i> Posture Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#employees">
+                        <i class="fas fa-users"></i> Employees
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#settings">
+                        <i class="fas fa-cog"></i> Settings
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="mt-auto">
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Dashboard Overview</h2>
+                <div class="text-muted">
+                    <i class="fas fa-calendar-alt"></i> {{ datetime.now().strftime('%B %d, %Y') }}
+                </div>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title text-muted">Employees Present</h5>
+                            <h2 class="mb-0">{{ present_count }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title text-muted">Total Employees</h5>
+                            <h2 class="mb-0">{{ total_employees }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title text-muted">Avg. Hours</h5>
+                            <h2 class="mb-0">{{ avg_hours|round(1) }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title text-muted">Bad Postures</h5>
+                            <h2 class="mb-0">{{ bad_posture_count }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Daily Attendance -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Today's Attendance</h5>
+                    <small class="text-muted">Updated: {{ datetime.now().strftime('%I:%M %p') }}</small>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Employee ID</th>
+                                    <th>Name</th>
+                                    <th>Login Time</th>
+                                    <th>Logout Time</th>
+                                    <th>Hours Worked</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in daily_attendance %}
+                                <tr>
+                                    <td>{{ record.emp_id }}</td>
+                                    <td>{{ record.name }}</td>
+                                    <td>{{ record.login_time.strftime('%I:%M %p') if record.login_time else '-' }}</td>
+                                    <td>{{ record.logout_time.strftime('%I:%M %p') if record.logout_time else '-' }}</td>
+                                    <td>{{ "%.1f"|format(record.total_hours) if record.total_hours else '-' }}</td>
+                                    <td>
+                                        {% if record.logout_time %}
+                                            <span class="badge bg-secondary">Logged Out</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Present</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Posture Reports -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Weekly Posture Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Employee ID</th>
+                                    <th>Name</th>
+                                    <th>Good Posture</th>
+                                    <th>Bad Posture</th>
+                                    <th>Date</th>
+                                    <th>Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in posture_reports %}
+                                <tr>
+                                    <td>{{ report.emp_id }}</td>
+                                    <td>{{ report.name }}</td>
+                                    <td>{{ report.good_posture }}</td>
+                                    <td>{{ report.bad_posture }}</td>
+                                    <td>{{ report.date }}</td>
+                                    <td>
+                                        {% set total = report.good_posture + report.bad_posture %}
+                                        {% if total > 0 %}
+                                            {% set score = (report.good_posture / total * 100)|int %}
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ score }}%" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100">{{ score }}%</div>
+                                            </div>
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function logout() {
+            // Clear basic auth credentials
+            fetch('/admin/logout', {
+                method: 'POST',
+                credentials: 'include'
+            }).then(() => {
+                window.location.href = '/admin';
+            });
+        }
+        
+        // You can add more interactive functionality here
+        document.addEventListener('DOMContentLoaded', function() {
+            // This would be where you'd fetch real-time data if needed
+            console.log('Admin dashboard loaded');
+        });
+    </script>
+</body>
+</html>

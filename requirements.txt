@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+opencv-python
+numpy
+face-recognition
+mysql-connector-python
+pillow
+python-multipart

@@ -4,132 +4,190 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Select Mode</title>
-
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Background Animation */
-        body {
-            background: linear-gradient(to right, #141E30, #243B55);
-            color: white;
-            text-align: center;
-            overflow: hidden;
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
         }
-
-        /* Container Styling */
-        .container {
+        
+        body {
+            background: linear-gradient(135deg, var(--secondary-color), var(--dark-color));
+            color: white;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .mode-container {
             height: 100vh;
             display: flex;
-            align-items: center;
-            justify-content: center;
             flex-direction: column;
+            justify-content: center;
         }
-
-        /* Glassmorphism Cards */
+        
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, var(--primary-color), var(--light-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .mode-cards {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
         .mode-card {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 15px;
-            padding: 20px;
-            margin: 15px;
-            width: 250px;
+            padding: 2rem;
+            width: 280px;
+            text-align: center;
+            transition: all 0.3s ease;
             backdrop-filter: blur(10px);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
         }
         
         .mode-card:hover {
-            transform: scale(1.1);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.15);
         }
-
-        /* Button Styling */
-        .mode-card a {
-            display: block;
-            padding: 12px;
-            font-size: 18px;
-            font-weight: bold;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: background 0.3s, transform 0.2s;
+        
+        .mode-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
         }
-
-        .btn-attendance { background: #17a2b8; }
-        .btn-education { background: #ffc107; color: black; }
-        .btn-law { background: #dc3545; }
-        .btn-smart { background: #28a745; }
-
-        .mode-card a:hover {
-            opacity: 0.8;
-            transform: translateY(-3px);
+        
+        .mode-card h3 {
+            margin-bottom: 1rem;
+            font-weight: 600;
         }
-
-        /* Floating Particles */
-        .floating-particles {
-            position: absolute;
+        
+        .mode-card p {
+            opacity: 0.7;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .btn-mode {
+            background: var(--primary-color);
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 500;
+            transition: all 0.3s ease;
             width: 100%;
-            height: 100%;
-            overflow: hidden;
-            top: 0;
-            left: 0;
-            z-index: -1;
         }
-
-        .floating-particles span {
+        
+        .btn-mode:hover {
+            background: #2980b9;
+            transform: scale(1.05);
+        }
+        
+        .admin-link {
             position: absolute;
-            width: 10px;
-            height: 10px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            animation: animateParticles linear infinite;
+            top: 20px;
+            right: 20px;
+            color: var(--light-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
         }
-
-        @keyframes animateParticles {
-            0% { transform: translateY(0); opacity: 1; }
-            100% { transform: translateY(-100vh); opacity: 0; }
+        
+        .admin-link:hover {
+            color: var(--primary-color);
         }
-
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .mode-cards {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .mode-card {
+                width: 80%;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Admin Link -->
+    <a href="/admin" class="admin-link">
+        <i class="fas fa-user-shield"></i> Admin Login
+    </a>
 
-    <div class="floating-particles">
-        <!-- Generates animated floating circles -->
-        <script>
-            for (let i = 0; i < 30; i++) {
-                let particle = document.createElement("span");
-                let size = Math.random() * 6 + 4;
-                particle.style.width = `${size}px`;
-                particle.style.height = `${size}px`;
-                particle.style.left = `${Math.random() * 100}vw`;
-                particle.style.animationDuration = `${Math.random() * 5 + 5}s`;
-                particle.style.animationDelay = `${Math.random() * 3}s`;
-                document.querySelector(".floating-particles").appendChild(particle);
-            }
-        </script>
-    </div>
-
-    <div class="container">
-        <h1 class="mb-4">🔍 Select Your Mode</h1>
-        <p class="lead">Choose the feature you want to use</p>
-
-        <div class="d-flex flex-wrap justify-content-center">
-            <div class="mode-card">
-                <a href="/attendance" class="btn btn-attendance">📷 Attendance Management</a>
+    <div class="container mode-container">
+        <div class="header">
+            <h1>Employee Monitoring System</h1>
+            <p>Select the mode you want to use</p>
+        </div>
+        
+        <div class="mode-cards">
+            <!-- Attendance Card -->
+            <div class="mode-card" onclick="window.location.href='/attendance'">
+                <div class="mode-icon">
+                    <i class="fas fa-user-clock"></i>
+                </div>
+                <h3>Attendance Management</h3>
+                <p>Mark your attendance using face recognition technology with login/logout tracking</p>
+                <button class="btn btn-mode">Open Attendance</button>
             </div>
-            <div class="mode-card">
-                <a href="/education" class="btn btn-education">🎓 Education & Exams</a>
+            
+            <!-- Monitoring Card -->
+            <div class="mode-card" onclick="window.location.href='/posture'">
+                <div class="mode-icon">
+                    <i class="fas fa-desktop"></i>
+                </div>
+                <h3>Employee Monitoring</h3>
+                <p>Real-time posture and activity monitoring with alerts and recommendations</p>
+                <button class="btn btn-mode">Start Monitoring</button>
             </div>
-            <div class="mode-card">
-                <a href="/law-enforcement" class="btn btn-law">🚔 Law Enforcement</a>
-            </div>
-            <div class="mode-card">
-                <a href="/smart-cities" class="btn btn-smart">🏙️ Smart Cities</a>
+            
+            <!-- Registration Card -->
+            <div class="mode-card" onclick="window.location.href='/register'">
+                <div class="mode-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <h3>Employee Registration</h3>
+                <p>Register new employees with face photos for the recognition system</p>
+                <button class="btn btn-mode">Register Employee</button>
             </div>
         </div>
     </div>
 
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
